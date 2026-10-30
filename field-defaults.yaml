@@ -1,0 +1,98 @@
+# SQA Jira auto-fill defaults for SQA_JIRA workflow.
+# Edit this file to change team defaults without rewriting SKILL.md.
+# Priority: user override > Xray/test-case lookup > this file > agent inference from Summary.
+
+project_key: SI91X
+issue_type: Bug
+# Component/s* — always this value on create/update; do not derive from Summary.
+component: Bug_Triage_Team
+# Reporter* — Jira username/email/key used to look up the filer's profile via
+# jira_get_user_profile. Prefer the profile `name` (or `key`) when setting Reporter
+# on create; show `display_name` in the draft. Change per machine/user.
+reporter_identifier: viverma
+# IsCrash* — default FALSE. Set TRUE only when Summary mentions crash/fault and
+# attached logs contain crash/dump evidence (see SKILL.md IsCrash* section).
+is_crash: "FALSE"
+# Issue Reproducibility* — always default unless user overrides.
+issue_reproducibility: "Easily reproducible"
+# Leave blank to force user input when not inferable from Summary or Xray.
+# Affects Version/s and Reported Version come from Summary 2nd bracket [Affects Version] — not from here.
+# DEFERRED: Fix Version/s is owned by Dev team after filing — do not ask or set via SQA_JIRA.
+# fix_version: ""
+requested_version: ""
+assignee: ""
+labels: []
+
+# Map Summary [product-or-device] tag → Jira Product(s)* / Platform Under Test / Labels.
+# Product(s)* and Platform Under Test are derived from the first Summary bracket tag.
+# Component/s* is NOT taken from this map — always use top-level `component: Bug_Triage_Team`.
+# Matching is case-insensitive on the tag; store canonical keys below.
+product_device_map:
+  # Preferred Summary tags → Product(s)* + Platform Under Test
+  SiWx917-Soc:
+    products: WiSeConnect-Soc
+    platform_under_test: "917 SoC"
+    labels: [SiWx917, SoC]
+  SiWx917-SoC-Customer-Specific:
+    products: WiSeConnect-Soc
+    platform_under_test: "Customer Specific"
+    labels: [SiWx917, SoC]
+  SiWx917-NCP:
+    products: WiSeConnect-NCP
+    platform_under_test: "917 NCP"
+    labels: [SiWx917, NCP]
+  SiWx917-RCP:
+    products: WiSeConnect-RCP
+    platform_under_test: "917 RCP"
+    labels: [SiWx917, RCP]
+  # Legacy / short tags (ask user to prefer SiWx917-Soc|NCP|RCP when Product(s)* / Platform is ambiguous)
+  SiWx917:
+    products: ""
+    platform_under_test: ""
+    labels: [SiWx917]
+  SI917:
+    products: ""
+    platform_under_test: ""
+    labels: [SiWx917]
+  Si917:
+    products: ""
+    platform_under_test: ""
+    labels: [SiWx917]
+  EFR32:
+    products: ""
+    platform_under_test: ""
+    labels: [EFR32]
+  NCP:
+    products: WiSeConnect-NCP
+    platform_under_test: "917 NCP"
+    labels: [NCP]
+  SoC:
+    products: WiSeConnect-Soc
+    platform_under_test: "917 SoC"
+    labels: [SoC]
+  Soc:
+    products: WiSeConnect-Soc
+    platform_under_test: "917 SoC"
+    labels: [SoC]
+  RCP:
+    products: WiSeConnect-RCP
+    platform_under_test: "917 RCP"
+    labels: [RCP]
+
+# Map Summary [feature] tag → Labels (extend as needed).
+feature_label_map:
+  scan: [scan]
+  bg_scan: [bg_scan, scan]
+  connect: [connect]
+  ap_mode: [ap_mode]
+  at_command: [at_command]
+  power_save: [power_save]
+  mqtt: [mqtt]
+  ble: [ble]
+
+# Optional: harness / report paths used when user does not attach logs.
+# Prefer absolute paths on the reporter's machine when known.
+evidence_hints:
+  pytest_report_dir: ""
+  uart_log_dir: ""
+  cmds_dir: ""
