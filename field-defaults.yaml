@@ -1,9 +1,13 @@
 # SQA Jira auto-fill defaults for SQA_JIRA workflow.
 # Edit this file to change team defaults without rewriting SKILL.md.
-# Priority: user override > Xray/test-case lookup > this file > agent inference from Summary.
+# Priority: user override > Atlassian Cloud TC lookup > this file > agent inference from Summary.
 
 project_key: SI91X
 issue_type: Bug
+# Prepend verbatim at the top of every Description draft/create body AND every
+# Jira triage comment body (see SKILL.md → Cursor disclaimer).
+triage_comment_disclaimer: >-
+  > **Disclaimer:** This triage and proposed PR is Cursor generated. Recommend manual review before accepting this fix.
 # Component/s* — always this value on create/update; do not derive from Summary.
 component: Bug_Triage_Team
 # Reporter* — Jira username/email/key used to look up the filer's profile via
@@ -15,13 +19,31 @@ reporter_identifier: viverma
 is_crash: "FALSE"
 # Issue Reproducibility* — always default unless user overrides.
 issue_reproducibility: "Easily reproducible"
-# Leave blank to force user input when not inferable from Summary or Xray.
+# Leave blank to force user input when not inferable from Summary or Atlassian TC.
 # Affects Version/s and Reported Version come from Summary 2nd bracket [Affects Version] — not from here.
 # DEFERRED: Fix Version/s is owned by Dev team after filing — do not ask or set via SQA_JIRA.
 # fix_version: ""
 requested_version: ""
 assignee: ""
 labels: []
+
+# Atlassian Cloud test-case lookup (Summary 3rd bracket).
+# Example Summary tag: [SW_SQA_TC-11261]
+# Browse URL form also accepted and normalized to the issue key.
+# TC Repro Steps + Expected Results are read from Cloud — never from Silabs jira-mcp.
+atlassian_cloud:
+  base_url: "https://siliconlabs.atlassian.net"
+  browse_path: "/browse/"
+  # Typical test-case project key prefix (informational; accept any KEY-\d+ that resolves on Cloud).
+  preferred_tc_project_prefix: "SW_SQA_TC"
+  # REST: GET {base_url}/rest/api/3/issue/{key} (summary/labels only — NOT the step table)
+  # Auth: Atlassian MCP if enabled; else Basic auth from ~/.cursor/mcp.json `atlassian` server.
+  # Never print tokens in chat.
+  #
+  # Steps source of truth (Xray UI):
+  #   Test details → Test Type = "Steps" → columns Action / Data / Expected Result
+  # Standard Jira description is often only the TC title; do not treat empty description as no steps.
+  # Prefer Xray Cloud API/GraphQL for full steps; else screenshot/paste of the Steps table.
 
 # Map Summary [product-or-device] tag → Jira Product(s)* / Platform Under Test / Labels.
 # Product(s)* and Platform Under Test are derived from the first Summary bracket tag.
@@ -79,7 +101,9 @@ product_device_map:
     platform_under_test: "917 RCP"
     labels: [RCP]
 
-# Map Summary [feature] tag → Labels (extend as needed).
+# Optional label enrichment ONLY — Summary 3rd bracket is an Atlassian TC key, not a feature name.
+# If the Cloud TC's labels/components/summary contain one of these slugs, add the mapped labels.
+# Do not accept these slugs as the Summary 3rd bracket anymore.
 feature_label_map:
   scan: [scan]
   bg_scan: [bg_scan, scan]
