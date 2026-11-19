@@ -10,10 +10,9 @@ triage_comment_disclaimer: >-
   > **Disclaimer:** This triage and proposed PR is Cursor generated. Recommend manual review before accepting this fix.
 # Component/s* — always this value on create/update; do not derive from Summary.
 component: Bug_Triage_Team
-# Reporter* — Jira username/email/key used to look up the filer's profile via
-# jira_get_user_profile. Prefer the profile `name` (or `key`) when setting Reporter
-# on create; show `display_name` in the draft. Change per machine/user.
-reporter_identifier: viverma
+# Reporter* — leave empty so the agent auto-resolves from OS USERNAME via
+# jira_get_user_profile. Set a local override only when OS login != Jira username.
+reporter_identifier: ""
 # IsCrash* — default FALSE. Set TRUE only when Summary mentions crash/fault and
 # attached logs contain crash/dump evidence (see SKILL.md IsCrash* section).
 is_crash: "FALSE"

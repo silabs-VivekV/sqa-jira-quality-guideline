@@ -195,7 +195,7 @@ Only these require user action. Collect them before creating the issue.
 | 4 | **Affects Version/s** | Prefer via Summary 2nd tag | Same value as Summary `[Affects Version]` |
 | 5 | **Reported Version** | Prefer via Summary 2nd tag | Same value as Summary `[Affects Version]` |
 | 6 | **Component/s\*** | Always auto | Always `Bug_Triage_Team` — never ask |
-| 7 | **Reporter\*** | Always from Jira profile | Resolve via `jira_get_user_profile` — never invent; ask once if lookup fails |
+| 7 | **Reporter\*** | Auto from OS username → Jira profile | Resolve via `jira_get_user_profile` using OS `USERNAME` (or local `reporter_identifier` override) — never invent; ask once if lookup fails |
 | 8 | **IsCrash\*** | Always auto | Default `FALSE`; may become `TRUE` after Summary + log analysis (see IsCrash*) |
 | 9 | **Issue Reproducibility\*** | Always auto | Always `Easily reproducible` unless user overrides |
 | 10 | **Issue Type** | Select if not Bug | Default: `Bug` from `field-defaults.yaml` |
@@ -219,7 +219,7 @@ Do **not** ask for fields that can be derived from Summary + Atlassian TC + defa
 | **Affects Version/s** | Summary 2nd bracket `[Affects Version]` — verbatim |
 | **Reported Version** | Same as Summary `[Affects Version]` — verbatim |
 | **Component/s\*** | Always `Bug_Triage_Team` from `field-defaults.yaml` → `component` (never from Summary; never ask) |
-| **Reporter\*** | Jira profile via `jira_get_user_profile` (see below) — mandatory on every draft/create |
+| **Reporter\*** | Auto: OS username → `jira_get_user_profile` (see below); optional local `reporter_identifier` — mandatory on every draft/create |
 | **IsCrash\*** | Default `FALSE` from `field-defaults.yaml` → `is_crash`; set `TRUE` only per IsCrash* rules below |
 | **Issue Reproducibility\*** | Always `Easily reproducible` from `field-defaults.yaml` → `issue_reproducibility` (never ask; user override wins) |
 | Issue Type | `field-defaults.yaml` → Bug |
@@ -244,7 +244,7 @@ Do **not** ask for fields that can be derived from Summary + Atlassian TC + defa
 4. Resolve **Product(s)\*** and **Platform Under Test** from `[product-or-device]` via `product_device_map`; ask once only if either is unmapped/empty.
 5. Set **Affects Version/s** and **Reported Version** from Summary `[Affects Version]` (same value); ask once only if the version cannot be applied in Jira.
 6. Set **Component/s\*** to `Bug_Triage_Team` always (from `field-defaults.yaml` → `component`).
-7. Resolve **Reporter\*** from Jira user profile (mandatory — see Reporter* section below).
+7. Resolve **Reporter\*** automatically from OS username → `jira_get_user_profile` (mandatory — see Reporter* section below).
 8. Resolve **IsCrash\*** (mandatory — default `FALSE`; see IsCrash* section below). Analyze attached logs when Summary mentions crash.
 9. Set **Issue Reproducibility\*** to `Easily reproducible` always (from `field-defaults.yaml` → `issue_reproducibility`), unless the user overrides.
 10. **Fetch the Atlassian Cloud TC** for the 3rd-bracket key (see Summary `[Atlassian-TC-key]`). Merge Repro Steps + Expected into the draft. Do **not** ask for or set **Fix Version/s** (SQA DevOps owns it after filing).
@@ -289,22 +289,22 @@ If the engineer edits the draft, show an updated draft and require a new **`FILE
 If the engineer asks to create without having seen a draft in this chat, **show the draft first** and wait for `FILE_JIRA` — do not file immediately.
 
 
-### Reporter* (mandatory — from Jira profile)
+### Reporter* (mandatory — auto-detect OS user → Jira profile)
 
-There is no Jira MCP “get current user” tool. Always resolve the filer via `jira_get_user_profile`:
+There is no Jira MCP “get current user” tool. Auto-detect the filer and resolve via `jira_get_user_profile` — do **not** hardcode a person in the shared skill.
 
 1. Identifier source (first match wins):
    - User override in the `SQA_JIRA` message (username / email / key)
-   - `field-defaults.yaml` → `reporter_identifier`
-   - Else OS username (e.g. Windows `USERNAME`) as a lookup hint
-2. Call `jira_get_user_profile` with that identifier.
+   - Non-empty `field-defaults.yaml` → `reporter_identifier` (optional local override only — leave blank in the shared/repo copy)
+   - Else **auto-detect OS username** (Windows `USERNAME` / `$env:USERNAME`, or Unix `USER` / `whoami`) as the lookup hint
+2. Call `jira_get_user_profile` with that identifier (typical Silabs usernames match the Windows login, e.g. `viverma`).
 3. From the profile response:
-   - Show **display_name** in the draft (e.g. `Vivek Verma`)
-   - Set Jira **Reporter\*** using profile **`name`** (Server/DC username, e.g. `viverma`) or **`key`** (`JIRAUSER…`) as required by the instance — prefer `name` when present
+   - Show **display_name** in the draft (e.g. the engineer’s real name)
+   - Set Jira **Reporter\*** using profile **`name`** (Server/DC username) or **`key`** (`JIRAUSER…`) as required by the instance — prefer `name` when present
 4. On create, pass Reporter via `additional_fields`, e.g. `{"reporter": {"name": "<profile.name>"}}` (adjust shape if the MCP/instance requires `key` instead).
-5. If lookup fails, **ask once** for Jira username or email; do not invent a reporter; do not create the issue until Reporter* is resolved.
+5. If lookup fails (OS username ≠ Jira username), **ask once** for Jira username or email; optionally suggest setting a local `reporter_identifier` in `field-defaults.yaml`. Do not invent a reporter; do not create the issue until Reporter* is resolved.
 
-Do not leave Reporter* blank when drafting. Do not use Assignee as a substitute for Reporter*.
+Do not leave Reporter* blank when drafting. Do not use Assignee as a substitute for Reporter*. Do not fall back to another engineer’s username from chat history or prior tickets.
 
 ### IsCrash* (mandatory — default FALSE; log-backed TRUE)
 
@@ -422,7 +422,7 @@ Legacy Silabs Xray/TestRail keys (`C990068`, etc.) are **not** a substitute for 
 - Populate **Platform Under Test** from Summary `[product-or-device]` (e.g. `[SiWx917-Soc]` → `917 SoC`)
 - Populate **Affects Version/s** and **Reported Version** from Summary `[Affects Version]` (same value)
 - Populate **Component/s\*** always as `Bug_Triage_Team`
-- Populate **Reporter\*** from Jira user profile (`jira_get_user_profile`)
+- Populate **Reporter\*** automatically from OS username → `jira_get_user_profile` (not a hardcoded teammate)
 - Populate **IsCrash\*** (`FALSE` by default; `TRUE` only if Summary mentions crash and attached logs show crash/dump evidence)
 - Populate **Issue Reproducibility\*** always as `Easily reproducible` (unless user overrides)
 - Include Atlassian TC key/URL from Summary 3rd bracket; pull Repro Steps / Expected from Cloud
